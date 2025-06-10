@@ -1,0 +1,193 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Blockchain Status - Admin{% endblock %}
+{% block admin_page_title %}Blockchain Status{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Connection Status -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center {% if stats.connected %}bg-emerald-100{% else %}bg-red-100{% endif %}">
+                    <i class="fas fa-network-wired {% if stats.connected %}text-emerald-600{% else %}text-red-600{% endif %} text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Connection</p>
+                    <p class="font-semibold {% if stats.connected %}text-emerald-600{% else %}text-red-600{% endif %}">
+                        {{ 'Connected' if stats.connected else 'Disconnected' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-cube text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Block Number</p>
+                    <p class="font-semibold text-gray-900">{{ stats.block_number }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-file-contract text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Contract</p>
+                    <p class="font-semibold {% if stats.contract_deployed %}text-emerald-600{% else %}text-amber-600{% endif %}">
+                        {{ 'Deployed' if stats.contract_deployed else 'Not Deployed' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-coins text-indigo-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Network</p>
+                    <p class="font-semibold text-gray-900">{{ stats.network }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Blockchain Actions</h3>
+        <div class="flex gap-4 flex-wrap">
+            {% if not stats.contract_deployed %}
+                <form method="POST" action="{{ url_for('admin.deploy_contract') }}" class="inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="px-6 py-3 gradient-bg text-white rounded-lg font-medium hover:opacity-90 transition flex items-center gap-2">
+                        <i class="fas fa-rocket"></i> Deploy Smart Contract
+                    </button>
+                </form>
+            {% endif %}
+            
+            <form method="POST" action="{{ url_for('admin.setup_user_wallets') }}" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="px-6 py-3 gradient-bg text-white rounded-lg font-medium hover:opacity-90 transition flex items-center gap-2">
+                    <i class="fas fa-wallet"></i> Setup User Wallets
+                </button>
+            </form>
+        </div>
+        
+        {% if stats.contract_address %}
+            <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-500">Contract Address</p>
+                <p class="font-mono text-sm text-gray-900">{{ stats.contract_address }}</p>
+            </div>
+        {% endif %}
+        
+        {% if stats.rpc_url %}
+            <div class="mt-2 p-4 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-500">RPC URL</p>
+                <p class="font-mono text-sm text-gray-900">{{ stats.rpc_url }}</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <p class="text-sm text-gray-500">Total Minted Products</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ stats.total_minted }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <p class="text-sm text-gray-500">Total On-Chain Transfers</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ stats.total_transfers }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <p class="text-sm text-gray-500">Total Wallets</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ stats.total_wallets }}</p>
+        </div>
+    </div>
+    
+    <!-- Recent Mints -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900">Recent Blockchain Mints</h3>
+        </div>
+        {% if recent_mints %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Token ID</th>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Product</th>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Network</th>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Transaction</th>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Minted At</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for mint in recent_mints %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-4 sm:px-6 py-4 font-mono text-gray-600">{{ mint.token_id }}</td>
+                                <td class="px-4 sm:px-6 py-4">
+                                    <a href="{{ url_for('products.product_detail', product_code=mint.product.unique_code) }}" class="text-indigo-600 hover:text-indigo-800 transition">
+                                        {{ mint.product.name }}
+                                    </a>
+                                </td>
+                                <td class="px-4 sm:px-6 py-4 text-gray-600">{{ mint.network }}</td>
+                                <td class="px-4 sm:px-6 py-4 font-mono text-xs text-gray-600 truncate max-w-[200px]">{{ mint.transaction_hash or 'N/A' }}</td>
+                                <td class="px-4 sm:px-6 py-4 text-gray-500">{{ mint.minted_at.strftime('%Y-%m-%d %H:%M') if mint.minted_at else 'N/A' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-gray-500 text-center py-12">No products minted on blockchain yet.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Transfers -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900">Recent On-Chain Transfers</h3>
+        </div>
+        {% if recent_transfers %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Transaction Hash</th>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">From</th>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">To</th>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Block</th>
+                            <th class="text-left px-4 sm:px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for tx in recent_transfers %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-4 sm:px-6 py-4 font-mono text-xs text-gray-600">{{ tx.transaction_hash[:20] }}...</td>
+                                <td class="px-4 sm:px-6 py-4 font-mono text-xs text-gray-600">{{ tx.from_address[:10] }}...</td>
+                                <td class="px-4 sm:px-6 py-4 font-mono text-xs text-gray-600">{{ tx.to_address[:10] }}...</td>
+                                <td class="px-4 sm:px-6 py-4 text-gray-600">{{ tx.block_number or 'N/A' }}</td>
+                                <td class="px-4 sm:px-6 py-4">
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium {% if tx.status == 'confirmed' %}bg-green-100 text-green-700{% else %}bg-amber-100 text-amber-700{% endif %}">
+                                        {{ tx.status.title() }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-gray-500 text-center py-12">No on-chain transfers yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

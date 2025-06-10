@@ -1,0 +1,278 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Product Management - Admin{% endblock %}
+{% block admin_page_title %}Product Management{% endblock %}
+
+{% block content %}
+<div class="w-full">
+    <!-- Search & Filter -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 mb-6">
+        <form method="GET" action="{{ url_for('admin.admin_products') }}" class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div class="flex-1 min-w-0">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                    <input type="text" name="search" value="{{ request.args.get('search', '') }}"
+                           placeholder="Search by name or code..."
+                           class="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <select name="status" class="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                    <option value="">All Status</option>
+                    <option value="pending_approval" {% if request.args.get('status') == 'pending_approval' %}selected{% endif %}>Pending Approval</option>
+                    <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="pending_sale" {% if request.args.get('status') == 'pending_sale' %}selected{% endif %}>Pending Sale</option>
+                    <option value="rejected" {% if request.args.get('status') == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+                <button type="submit" class="gradient-bg text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition">
+                    <i class="fas fa-filter mr-2"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Products Table -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <!-- Desktop Table -->
+        <div class="hidden md:block">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Code</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Creator</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">Approved</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">Listed</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for product in products.items %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                                            {% if product.image_urls %}
+                                                <img src="{{ product.image_urls[0] }}" alt="" class="w-full h-full object-cover">
+                                            {% else %}
+                                                <div class="w-full h-full flex items-center justify-center text-gray-400"><i class="fas fa-image"></i></div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="font-semibold text-gray-900 truncate">{{ product.name }}</p>
+                                            {% if product.category %}
+                                                <p class="text-xs text-gray-500 mt-1">{{ product.category.name }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600 font-mono text-sm">{{ product.unique_code }}</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-7 h-7 gradient-bg rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                            {{ product.creator.username[0].upper() }}
+                                        </div>
+                                        <span class="text-gray-600">{{ product.creator.username }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-semibold text-indigo-600">¥{{ "%.2f"|format(product.current_price|float) }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1.5 rounded-full text-xs font-medium
+                                        {% if product.status == 'pending_approval' %}bg-amber-100 text-amber-700
+                                        {% elif product.status == 'active' %}bg-green-100 text-green-700
+                                        {% elif product.status == 'pending_sale' %}bg-blue-100 text-blue-700
+                                        {% elif product.status == 'sold' %}bg-indigo-100 text-indigo-700
+                                        {% elif product.status == 'rejected' %}bg-red-100 text-red-700
+                                        {% elif product.status == 'inactive' %}bg-gray-100 text-gray-700
+                                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                        {% if product.status == 'pending_approval' %}Pending Approval
+                                        {% elif product.status == 'pending_sale' %}Sale in Progress
+                                        {% elif product.status == 'sold' %}Sold
+                                        {% else %}{{ product.status.title() }}{% endif %}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if product.is_approved %}
+                                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600">
+                                            <i class="fas fa-check text-xs"></i>
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-600">
+                                            <i class="fas fa-x text-xs"></i>
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if product.is_listed %}
+                                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-600">
+                                            <i class="fas fa-check text-xs"></i>
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-600">
+                                            <i class="fas fa-x text-xs"></i>
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-wrap items-center justify-end gap-2">
+                                        <a href="{{ url_for('products.product_detail', product_code=product.unique_code) }}" target="_blank" 
+                                           class="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                                           title="View Product">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.product_logs', product_id=product.id) }}" 
+                                           class="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition"
+                                           title="View Logs">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </a>
+                                        {% if not product.blockchain_record or not product.blockchain_record.is_minted %}
+                                        <form method="POST" action="{{ url_for('admin.mint_product', product_id=product.id) }}" class="inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" 
+                                                    class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition" 
+                                                    title="Mint on Blockchain">
+                                                <i class="fas fa-cube"></i> Mint
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                        <form method="POST" action="{{ url_for('admin.toggle_product', product_id=product.id) }}" class="inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" 
+                                                    class="px-3 py-1.5 rounded-lg text-xs font-medium {% if product.is_listed %}bg-amber-100 text-amber-700 hover:bg-amber-200{% else %}bg-green-100 text-green-700 hover:bg-green-200{% endif %} transition">
+                                                {{ 'Unlist' if product.is_listed else 'List' }}
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('admin.delete_product', product_id=product.id) }}" class="inline" 
+                                              onsubmit="return confirm('Delete product {{ product.unique_code }}?')">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" 
+                                                    class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition"
+                                                    title="Delete Product">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="md:hidden divide-y divide-gray-100">
+            {% for product in products.items %}
+            <div class="p-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                        {% if product.image_urls %}
+                            <img src="{{ product.image_urls[0] }}" alt="" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center text-gray-400"><i class="fas fa-image"></i></div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <h3 class="font-semibold text-gray-900 truncate">{{ product.name }}</h3>
+                                <p class="text-xs text-gray-500 font-mono mt-0.5">{{ product.unique_code }}</p>
+                            </div>
+                            <span class="text-lg font-semibold text-indigo-600 whitespace-nowrap">¥{{ "%.2f"|format(product.current_price|float) }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="w-6 h-6 gradient-bg rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                {{ product.creator.username[0].upper() }}
+                            </div>
+                            <p class="text-sm text-gray-600">{{ product.creator.username }}</p>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 mt-2">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-medium
+                                {% if product.status == 'pending_approval' %}bg-amber-100 text-amber-700
+                                {% elif product.status == 'active' %}bg-green-100 text-green-700
+                                {% elif product.status == 'pending_sale' %}bg-blue-100 text-blue-700
+                                {% elif product.status == 'sold' %}bg-indigo-100 text-indigo-700
+                                {% elif product.status == 'rejected' %}bg-red-100 text-red-700
+                                {% elif product.status == 'inactive' %}bg-gray-100 text-gray-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {% if product.status == 'pending_approval' %}Pending Approval
+                                {% elif product.status == 'pending_sale' %}Sale in Progress
+                                {% elif product.status == 'sold' %}Sold
+                                {% else %}{{ product.status.title() }}{% endif %}
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-medium {% if product.is_approved %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                                {{ 'Approved' if product.is_approved else 'Pending' }}
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-medium {% if product.is_listed %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ 'Listed' if product.is_listed else 'Unlisted' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <a href="{{ url_for('products.product_detail', product_code=product.unique_code) }}" target="_blank" 
+                       class="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                        <i class="fas fa-eye mr-1"></i> View
+                    </a>
+                    {% if not product.blockchain_record or not product.blockchain_record.is_minted %}
+                    <form method="POST" action="{{ url_for('admin.mint_product', product_id=product.id) }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition">
+                            <i class="fas fa-cube mr-1"></i> Mint
+                        </button>
+                    </form>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('admin.toggle_product', product_id=product.id) }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium {% if product.is_listed %}bg-amber-100 text-amber-700 hover:bg-amber-200{% else %}bg-green-100 text-green-700 hover:bg-green-200{% endif %} transition">
+                            {{ 'Unlist' if product.is_listed else 'List' }}
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.delete_product', product_id=product.id) }}" class="inline" 
+                          onsubmit="return confirm('Delete product {{ product.unique_code }}?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition">
+                            <i class="fas fa-trash mr-1"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Empty State -->
+        {% if not products.items %}
+            <div class="p-12 text-center text-gray-500">
+                <i class="fas fa-box text-gray-300 text-4xl mb-3 block"></i>
+                <p>No products found</p>
+            </div>
+        {% endif %}
+        
+        <!-- Pagination -->
+        {% if products.has_prev or products.has_next %}
+            {% set qargs = request.args.copy() %}{% set _ = qargs.pop('page', None) %}
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-center">
+                <div class="flex space-x-2">
+                    {% if products.has_prev %}
+                        <a href="{{ url_for('admin.admin_products', page=products.prev_num, **qargs) }}" 
+                           class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    {% endif %}
+                    <span class="px-4 py-2 rounded-lg gradient-bg text-white font-medium">{{ products.page }}</span>
+                    {% if products.has_next %}
+                        <a href="{{ url_for('admin.admin_products', page=products.next_num, **qargs) }}" 
+                           class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Traceable Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+        <p class="text-gray-600 mt-1">Manage your account and payment settings</p>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Profile Card -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 text-center">
+                <div class="relative inline-block mb-4">
+                    <img id="profilePreview" src="{{ current_user.profile_image or '' }}" alt="{{ current_user.username }}"
+                         class="w-24 h-24 rounded-full object-cover mx-auto border-4 border-indigo-100 {% if not current_user.profile_image %}hidden{% endif %}">
+                    <div id="profilePlaceholder" class="w-24 h-24 gradient-bg rounded-full flex items-center justify-center mx-auto text-white text-3xl font-bold {% if current_user.profile_image %}hidden{% endif %}">
+                        {{ current_user.username[0].upper() }}
+                    </div>
+                    <label for="profile_image" class="absolute bottom-0 right-0 w-8 h-8 gradient-bg rounded-full flex items-center justify-center text-white cursor-pointer hover:opacity-90 transition shadow-lg">
+                        <i class="fas fa-camera text-xs"></i>
+                    </label>
+                    <input type="file" id="profile_image" name="profile_image" accept="image/*" class="hidden"
+                           onchange="previewImage(this, 'profilePreview', 'profilePlaceholder')">
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">{{ current_user.username }}</h3>
+                <p class="text-gray-500 text-sm">{{ current_user.email }}</p>
+                {% if current_user.is_verified %}
+                    <div class="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i> Verified Member
+                    </div>
+                    {% else %}
+                    <div class="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        <i class="fas fa-exclamation-circle mr-1"></i> Unverified
+                    </div>
+                    {% endif %}
+                
+                <div class="mt-6 pt-6 border-t border-gray-100 text-left">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-500">Items Listed</span>
+                        <span class="font-semibold text-gray-900">{{ current_user.owned_products.filter_by(is_listed=True).count() }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-500">Items Owned</span>
+                        <span class="font-semibold text-gray-900">{{ current_user.owned_products.count() }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">Member Since</span>
+                        <span class="font-semibold text-gray-900">{{ current_user.created_at.strftime('%b %Y') }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment QR Preview -->
+            {% if current_user.payment_qr_url %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mt-6">
+                <h4 class="font-semibold text-gray-900 mb-3">Payment QR Code</h4>
+                <img src="{{ current_user.payment_qr_url }}" alt="Payment QR" class="w-full rounded-lg border border-gray-200">
+                <p class="text-xs text-gray-500 mt-2 text-center">Buyers will scan this to pay you</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Edit Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Edit Profile</h2>
+                
+                <form method="POST" action="" enctype="multipart/form-data" class="space-y-6">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            {{ form.full_name(class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition") }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            {{ form.phone(class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition") }}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        {{ form.address(class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition", rows=3) }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                        {{ form.bio(class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition", rows=3, placeholder="Tell buyers about yourself...") }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bank Details</label>
+                        {{ form.bank_details(class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition", rows=3, placeholder="Account name, Bank, Account number...") }}
+                        <p class="text-xs text-gray-500 mt-1">This will be shown to buyers for manual payment</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment QR Code</label>
+                        <img id="qrPreview" src="" alt="QR Preview" class="w-40 h-40 rounded-lg border-2 border-gray-200 object-cover mb-3 hidden">
+                        <input type="file" name="payment_qr" accept="image/*" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                               onchange="previewImage(this, 'qrPreview', null)">
+                        <p class="text-xs text-gray-500 mt-1">Upload your payment QR (GCash, PayPal, etc.)</p>
+                    </div>
+                    
+                    <button type="submit" class="gradient-bg text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition shadow-lg">
+                        <i class="fas fa-save mr-2"></i> Save Changes
+                    </button>
+                </form>
+
+                <!-- Account Actions -->
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="{{ url_for('auth.change_password') }}" class="inline-flex items-center px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition">
+                            <i class="fas fa-key mr-2 text-gray-400"></i> Change Password
+                        </a>
+                        <button onclick="document.getElementById('deleteModal').classList.remove('hidden')"
+                                class="inline-flex items-center px-5 py-2.5 rounded-lg border border-red-200 text-red-600 font-medium hover:bg-red-50 transition">
+                            <i class="fas fa-trash-alt mr-2"></i> Delete Account
+                        </button>
+                    </div>
+                </div>
+
+                <script>
+                function previewImage(input, previewId, placeholderId) {
+                    if (input.files && input.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const preview = document.getElementById(previewId);
+                            preview.src = e.target.result;
+                            preview.classList.remove('hidden');
+                            if (placeholderId) {
+                                document.getElementById(placeholderId).classList.add('hidden');
+                            }
+                        };
+                        reader.readAsDataURL(input.files[0]);
+                    }
+                }
+                </script>
+                <!-- Delete Account Modal -->
+                <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+                    <div class="absolute inset-0 bg-black/50" onclick="document.getElementById('deleteModal').classList.add('hidden')"></div>
+                    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 fade-in">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Delete Account?</h3>
+                            <p class="text-gray-500 mt-2">This action cannot be undone. All your personal data will be permanently removed. Your products and transfer history will be anonymized.</p>
+                        </div>
+                        <form method="POST" action="{{ url_for('auth.delete_account') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="flex gap-3">
+                                <button type="button" onclick="document.getElementById('deleteModal').classList.add('hidden')"
+                                        class="flex-1 px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="flex-1 px-5 py-2.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition">
+                                    <i class="fas fa-trash-alt mr-2"></i> Delete Forever
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

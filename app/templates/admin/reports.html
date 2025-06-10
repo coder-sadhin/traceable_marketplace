@@ -1,0 +1,109 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Export Reports - Admin{% endblock %}
+{% block admin_page_title %}Export Reports{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+
+    <!-- Info Banner -->
+    <div class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100 p-5 mb-6">
+        <div class="flex items-start gap-3">
+            <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                <i class="fas fa-file-export text-indigo-600"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-900 text-sm">Download Platform Reports</h3>
+                <p class="text-sm text-gray-600 mt-0.5">Export your platform data as CSV files for analysis, accounting, or record-keeping.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+        <!-- Sales Report -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
+            <div class="p-5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-shopping-cart text-green-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Sales Report</h3>
+                        <p class="text-xs text-gray-400">Completed transfers</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mb-4 leading-relaxed">All completed sales with buyer, seller, price, royalties, and platform fees.</p>
+                <a href="{{ url_for('admin.export_sales_csv') }}" class="flex items-center justify-center gap-2 w-full bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                    <i class="fas fa-download"></i> Download CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- Payouts Report -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
+            <div class="p-5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-coins text-purple-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Payouts Report</h3>
+                        <p class="text-xs text-gray-400">Royalty payments</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mb-4 leading-relaxed">All royalty payouts with status, amounts, and payment details.</p>
+                <a href="{{ url_for('admin.export_payouts_csv') }}" class="flex items-center justify-center gap-2 w-full bg-purple-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-purple-700 transition">
+                    <i class="fas fa-download"></i> Download CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- Users Report -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
+            <div class="p-5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Users Report</h3>
+                        <p class="text-xs text-gray-400">All registered users</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mb-4 leading-relaxed">All users with roles, verification status, and activity dates.</p>
+                <a href="{{ url_for('admin.export_users_csv') }}" class="flex items-center justify-center gap-2 w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                    <i class="fas fa-download"></i> Download CSV
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-chart-bar text-gray-400"></i> Data Summary
+            </h2>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-gray-100">
+            <div class="p-5 text-center">
+                <p class="text-2xl font-bold text-gray-900">{{ stats.total_users if stats else 0 }}</p>
+                <p class="text-xs text-gray-500 mt-1">Total Users</p>
+            </div>
+            <div class="p-5 text-center">
+                <p class="text-2xl font-bold text-gray-900">{{ stats.total_products if stats else 0 }}</p>
+                <p class="text-xs text-gray-500 mt-1">Total Products</p>
+            </div>
+            <div class="p-5 text-center">
+                <p class="text-2xl font-bold text-gray-900">{{ stats.completed_sales if stats else 0 }}</p>
+                <p class="text-xs text-gray-500 mt-1">Completed Sales</p>
+            </div>
+            <div class="p-5 text-center">
+                <p class="text-2xl font-bold text-indigo-600">¥{{ "%.0f"|format(stats.total_revenue or 0) }}</p>
+                <p class="text-xs text-gray-500 mt-1">Total Revenue</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

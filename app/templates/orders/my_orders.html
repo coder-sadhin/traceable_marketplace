@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - Traceable Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Orders</h1>
+        <p class="text-gray-600 mt-1">Track your purchases</p>
+    </div>
+    
+    {% if orders %}
+        <div class="space-y-4">
+            {% for order in orders %}
+                <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-gray-500">Order #{{ order.id }}</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium 
+                                {% if order.status == 'completed' %}bg-green-100 text-green-700
+                                {% elif order.status == 'pending_verification' %}bg-yellow-100 text-yellow-700
+                                {% elif order.status == 'pending_payment' %}bg-blue-100 text-blue-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ order.status.replace('_', ' ').title() }}
+                            </span>
+                        </div>
+                        <span class="font-bold text-indigo-600">¥{{ "%.2f"|format(order.sale_price|float) }}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            {% set product = order.product %}
+                            {% if product.image_urls %}
+                                <img src="{{ product.image_urls[0] }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">{{ product.name }}</h3>
+                            <p class="text-sm text-gray-500">{{ product.unique_code }}</p>
+                            <p class="text-sm text-gray-500">From: {{ order.from_user.username }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500">{{ order.created_at.strftime('%b %d, %Y') }}</p>
+                            {% if order.status == 'pending_payment' %}
+                                <a href="{{ url_for('orders.upload_receipt', transfer_id=order.id) }}" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                    Upload Receipt
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-gray-50 rounded-2xl p-12 text-center">
+            <i class="fas fa-shopping-bag text-gray-400 text-4xl mb-4"></i>
+            <h3 class="text-lg font-semibold text-gray-900">No orders yet</h3>
+            <p class="text-gray-600 mt-1">Start browsing to find unique items!</p>
+            <a href="{{ url_for('products.browse') }}" class="inline-block mt-4 gradient-bg text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition">
+                Browse Items
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

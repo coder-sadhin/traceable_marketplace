@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}My Sales - Traceable Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Sales</h1>
+        <p class="text-gray-600 mt-1">Manage your sales and verify payments</p>
+    </div>
+    
+    {% if sales %}
+        <div class="space-y-4">
+            {% for sale in sales %}
+                <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-gray-500">Sale #{{ sale.id }}</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium 
+                                {% if sale.status == 'completed' %}bg-green-100 text-green-700
+                                {% elif sale.status == 'pending_verification' %}bg-yellow-100 text-yellow-700
+                                {% elif sale.status == 'pending_payment' %}bg-blue-100 text-blue-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ sale.status.replace('_', ' ').title() }}
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-indigo-600">¥{{ "%.2f"|format(sale.sale_price|float) }}</span>
+                            {% if sale.royalty_amount > 0 %}
+                                <p class="text-xs text-amber-600">Royalty: ¥{{ "%.2f"|format(sale.royalty_amount|float) }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            {% set product = sale.product %}
+                            {% if product.image_urls %}
+                                <img src="{{ product.image_urls[0] }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">{{ product.name }}</h3>
+                            <p class="text-sm text-gray-500">{{ product.unique_code }}</p>
+                            <p class="text-sm text-gray-500">To: {{ sale.to_user.username }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500">{{ sale.created_at.strftime('%b %d, %Y') }}</p>
+                            {% if sale.status == 'pending_verification' %}
+                                <a href="{{ url_for('orders.verify_receipt', transfer_id=sale.id) }}" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                    Verify Payment
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-gray-50 rounded-2xl p-12 text-center">
+            <i class="fas fa-store text-gray-400 text-4xl mb-4"></i>
+            <h3 class="text-lg font-semibold text-gray-900">No sales yet</h3>
+            <p class="text-gray-600 mt-1">List your items to start selling!</p>
+            <a href="{{ url_for('products.list_product') }}" class="inline-block mt-4 gradient-bg text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition">
+                List an Item
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

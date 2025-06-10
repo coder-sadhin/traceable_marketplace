@@ -1,0 +1,242 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard - Traceable Marketplace{% endblock %}
+{% block admin_page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Total Users</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 truncate">{{ stats.total_users }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-users text-blue-600 text-lg sm:text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Total Products</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 truncate">{{ stats.total_products }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-box text-green-600 text-lg sm:text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Listed Products</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 truncate">{{ stats.listed_products }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-store text-indigo-600 text-lg sm:text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-amber-200 p-4 sm:p-6 {% if stats.pending_approval > 0 %}ring-2 ring-amber-300{% endif %}">
+            <a href="{{ url_for('admin.pending_products') }}" class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Pending Review</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-amber-600 truncate">{{ stats.pending_approval }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-clock text-amber-600 text-lg sm:text-xl"></i>
+                </div>
+            </a>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Total Transfers</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-900 truncate">{{ stats.total_transfers }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-exchange-alt text-purple-600 text-lg sm:text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-orange-200 p-4 sm:p-6 {% if stats.pending_seller_payouts > 0 %}ring-2 ring-orange-300{% endif %}">
+            <a href="{{ url_for('admin.seller_payouts') }}" class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Seller Payouts Pending</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-orange-600 truncate">{{ stats.pending_seller_payouts }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-hand-holding-usd text-orange-600 text-lg sm:text-xl"></i>
+                </div>
+            </a>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Pending Verification</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-amber-600 truncate">{{ stats.pending_verification }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-clock text-amber-600 text-lg sm:text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Completed Sales</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-green-600 truncate">{{ stats.completed_sales }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-check-circle text-green-600 text-lg sm:text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Total Revenue</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-indigo-600 truncate">¥{{ "%.2f"|format(stats.total_revenue|float) }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-dollar-sign text-indigo-600 text-lg sm:text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Total Royalties</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-amber-600 truncate">¥{{ "%.2f"|format(stats.total_royalties|float) }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-crown text-amber-600 text-lg sm:text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 truncate">Platform Fees (3%)</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-emerald-600 truncate">¥{{ "%.2f"|format(stats.total_platform_fees|float) }}</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0 ml-3">
+                    <i class="fas fa-percentage text-emerald-600 text-lg sm:text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending Transfers Alert -->
+    {% if pending_transfers %}
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-6 mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+            <h3 class="text-lg font-bold text-amber-800">
+                <i class="fas fa-exclamation-triangle mr-2"></i> Pending Verifications ({{ pending_transfers|length }})
+            </h3>
+            <a href="{{ url_for('admin.transfers') }}" class="text-amber-700 font-medium hover:text-amber-900">View All</a>
+        </div>
+        <div class="space-y-3">
+            {% for transfer in pending_transfers %}
+                <div class="bg-white rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                            {% if transfer.product.image_urls %}
+                                <img src="{{ transfer.product.image_urls[0] }}" alt="" class="w-full h-full object-cover">
+                            {% endif %}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-medium text-gray-900 truncate">{{ transfer.product.name }}</p>
+                            <p class="text-sm text-gray-500 truncate">Buyer: <a href="{{ url_for('users.public_profile', username=transfer.to_user.username) }}" class="text-indigo-600 hover:underline">{{ transfer.to_user.username }}</a> | Seller: <a href="{{ url_for('users.public_profile', username=transfer.from_user.username) }}" class="text-indigo-600 hover:underline">{{ transfer.from_user.username }}</a></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <span class="font-bold text-indigo-600">¥{{ "%.2f"|format(transfer.sale_price|float) }}</span>
+                        <a href="{{ url_for('admin.transfer_detail', transfer_id=transfer.id) }}" class="gradient-bg text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition">
+                            Verify
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Recent Products</h3>
+                <a href="{{ url_for('admin.admin_products') }}" class="text-indigo-600 text-sm font-medium hover:text-indigo-800">View All</a>
+            </div>
+            {% if recent_products %}
+                <div class="space-y-3">
+                    {% for product in recent_products %}
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <div class="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                {% if product.image_urls %}
+                                    <img src="{{ product.image_urls[0] }}" alt="" class="w-full h-full object-cover">
+                                {% else %}
+                                    <div class="w-full h-full flex items-center justify-center text-gray-400"><i class="fas fa-image text-xs"></i></div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium text-gray-900 truncate">{{ product.name }}</p>
+                                <p class="text-xs text-gray-500">{{ product.unique_code }} | by {{ product.creator.username }}</p>
+                            </div>
+                            <span class="text-sm font-medium text-indigo-600">¥{{ "%.2f"|format(product.current_price|float) }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500 text-center py-4">No products yet</p>
+            {% endif %}
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Recent Transfers</h3>
+                <a href="{{ url_for('admin.transfers') }}" class="text-indigo-600 text-sm font-medium hover:text-indigo-800">View All</a>
+            </div>
+            {% if recent_transfers %}
+                <div class="space-y-3">
+                    {% for transfer in recent_transfers %}
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <div class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                                {{ transfer.from_user.username[0].upper() }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium text-gray-900 text-sm">
+                                    {{ transfer.from_user.username }} <i class="fas fa-arrow-right text-xs text-gray-400 mx-1"></i> {{ transfer.to_user.username }}
+                                </p>
+                                <p class="text-xs text-gray-500">{{ transfer.transfer_date.strftime('%b %d, %Y') }}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-xs font-medium 
+                                {% if transfer.status == 'completed' %}bg-green-100 text-green-700
+                                {% elif transfer.status == 'pending_verification' %}bg-yellow-100 text-yellow-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ transfer.status.replace('_', ' ').title() }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500 text-center py-4">No transfers yet</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

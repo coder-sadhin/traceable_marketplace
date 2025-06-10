@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Traceable Marketplace{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        [x-cloak] { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .hover-lift { transition: transform 0.2s, box-shadow 0.2s; }
+        .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.15); }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans antialiased min-h-screen flex flex-col">
+    
+    <!-- Navigation -->
+    <nav class="glass-effect shadow-sm sticky top-0 z-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="{{ url_for('main.index') }}" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                            <i class="fas fa-fingerprint text-white text-sm"></i>
+                        </div>
+                        <span class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                            Traceable
+                        </span>
+                    </a>
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="{{ url_for('main.index') }}" class="text-gray-600 hover:text-indigo-600 font-medium transition">Home</a>
+                        <a href="{{ url_for('products.browse') }}" class="text-gray-600 hover:text-indigo-600 font-medium transition">Browse</a>
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('products.list_product') }}" class="text-gray-600 hover:text-indigo-600 font-medium transition">Sell</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if current_user.is_authenticated %}
+                        <!-- Mobile Menu Toggle -->
+                        <div class="md:hidden relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="text-gray-600 hover:text-indigo-600 transition p-1">
+                                <i class="fas fa-bars text-lg"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                                <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Navigation</div>
+                                <a href="{{ url_for('main.index') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-home mr-3 text-gray-400 w-4"></i> Home
+                                </a>
+                                <a href="{{ url_for('products.browse') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-search mr-3 text-gray-400 w-4"></i> Browse
+                                </a>
+                                <a href="{{ url_for('products.list_product') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-plus-circle mr-3 text-gray-400 w-4"></i> Sell
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <div class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">My Account</div>
+                                <a href="{{ url_for('products.my_products') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-box mr-3 text-gray-400 w-4"></i> My Items
+                                </a>
+                                <a href="{{ url_for('messages.inbox') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-envelope mr-3 text-gray-400 w-4"></i> Messages
+                                </a>
+                                <a href="{{ url_for('royalties.dashboard') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-coins mr-3 text-gray-400 w-4"></i> Royalties
+                                </a>
+                                <a href="{{ url_for('orders.my_orders') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-shopping-bag mr-3 text-gray-400 w-4"></i> My Orders
+                                </a>
+                                <a href="{{ url_for('orders.my_sales') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-store mr-3 text-gray-400 w-4"></i> My Sales
+                                </a>
+                                <a href="{{ url_for('products.wishlist') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-heart mr-3 text-gray-400 w-4"></i> Wishlist
+                                </a>
+                                <a href="{{ url_for('notifications.list_notifications') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-bell mr-3 text-gray-400 w-4"></i> Notifications
+                                    {% if unread_notifications > 0 %}
+                                        <span class="ml-auto w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{{ unread_notifications }}</span>
+                                    {% endif %}
+                                </a>
+                            </div>
+                        </div>
+                        <!-- Notification Bell -->
+                        <a href="{{ url_for('notifications.list_notifications') }}" class="relative text-gray-600 hover:text-indigo-600 transition">
+                            <i class="fas fa-bell text-lg"></i>
+                            {% if unread_notifications > 0 or active_announcement_count > 0 %}
+                                {% set total_badge = unread_notifications + active_announcement_count %}
+                                <span data-notification-badge class="absolute -top-1.5 -right-1.5 min-w-[1rem] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                                    {{ total_badge }}
+                                </span>
+                            {% else %}
+                                <span data-notification-badge class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center" style="display: none;">
+                                    0
+                                </span>
+                            {% endif %}
+                        </a>
+                        <a href="{{ url_for('products.my_products') }}" class="hidden md:flex text-gray-600 hover:text-indigo-600 font-medium transition">
+                            <i class="fas fa-box mr-2 mt-1"></i> My Items
+                        </a>
+                        <a href="{{ url_for('messages.inbox') }}" class="hidden md:flex text-gray-600 hover:text-indigo-600 font-medium transition">
+                            <i class="fas fa-envelope mr-2 mt-1"></i> Messages
+                        </a>
+                        <a href="{{ url_for('royalties.dashboard') }}" class="hidden md:flex text-gray-600 hover:text-indigo-600 font-medium transition">
+                            <i class="fas fa-coins mr-2 mt-1"></i> Royalties
+                        </a>
+                        <a href="{{ url_for('products.wishlist') }}" class="hidden md:flex text-gray-600 hover:text-indigo-600 font-medium transition">
+                            <i class="fas fa-heart mr-2 mt-1"></i> Wishlist
+                        </a>
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 transition">
+                                {% if current_user.profile_image %}
+                                    <img src="{{ current_user.profile_image }}" alt="" class="w-8 h-8 rounded-full object-cover border-2 border-indigo-200">
+                                {% else %}
+                                    <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                                        {{ current_user.username[0].upper() }}
+                                    </div>
+                                {% endif %}
+                                <span class="hidden sm:block font-medium">{{ current_user.username }}</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                                <div class="px-4 py-2 border-b border-gray-100">
+                                    <p class="text-sm font-semibold text-gray-900">{{ current_user.username }}</p>
+                                    <p class="text-xs text-gray-500">{{ current_user.email }}</p>
+                                </div>
+                                <a href="{{ url_for('auth.profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <i class="fas fa-user mr-3 text-gray-400 w-4"></i> Profile
+                                </a>
+                                <a href="{{ url_for('orders.my_orders') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <i class="fas fa-shopping-bag mr-3 text-gray-400 w-4"></i> My Orders
+                                </a>
+                                <a href="{{ url_for('orders.my_sales') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <i class="fas fa-store mr-3 text-gray-400 w-4"></i> My Sales
+                                </a>
+                                <a href="{{ url_for('messages.inbox') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <i class="fas fa-envelope mr-3 text-gray-400 w-4"></i> Messages
+                                </a>
+                                <a href="{{ url_for('royalties.dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <i class="fas fa-coins mr-3 text-gray-400 w-4"></i> My Royalties
+                                </a>
+                                <a href="{{ url_for('products.wishlist') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <i class="fas fa-heart mr-3 text-gray-400 w-4"></i> Wishlist
+                                </a>
+                                <a href="{{ url_for('notifications.list_notifications') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition md:hidden">
+                                    <i class="fas fa-bell mr-3 text-gray-400 w-4"></i> Notifications
+                                    {% if unread_notifications > 0 %}
+                                        <span class="ml-auto w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{{ unread_notifications }}</span>
+                                    {% endif %}
+                                </a>
+                                {% if current_user.is_admin() %}
+                                    <a href="{{ url_for('admin.dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                        <i class="fas fa-shield-alt mr-3 text-gray-400 w-4"></i> Admin
+                                    </a>
+                                {% endif %}
+                                <div class="border-t border-gray-100 mt-1 pt-1">
+                                    <a href="{{ url_for('auth.logout') }}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
+                                        <i class="fas fa-sign-out-alt mr-3 w-4"></i> Logout
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="text-gray-600 hover:text-indigo-600 font-medium transition">Sign In</a>
+                        <a href="{{ url_for('auth.register') }}" class="gradient-bg text-white px-5 py-2 rounded-lg font-medium hover:opacity-90 transition shadow-md">
+                            Get Started
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 space-y-2">
+                {% for category, message in messages %}
+                    <div class="rounded-lg p-4 flex items-center justify-between fade-in {% if category == 'error' %}bg-red-50 border border-red-200 text-red-800{% elif category == 'success' %}bg-green-50 border border-green-200 text-green-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}"
+                         x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
+                        <div class="flex items-center">
+                            <i class="fas {% if category == 'error' %}fa-exclamation-circle{% elif category == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-3"></i>
+                            <span class="font-medium">{{ message }}</span>
+                        </div>
+                        <button @click="show = false" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                            <i class="fas fa-fingerprint text-white text-sm"></i>
+                        </div>
+                        <span class="text-xl font-bold text-white">Traceable</span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed max-w-md">
+                        The world's first fully traceable marketplace for handmade and unique assets. 
+                        Every product tells a story, every transfer is recorded.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Platform</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="{{ url_for('products.browse') }}" class="hover:text-white transition">Browse Items</a></li>
+                        <li><a href="{{ url_for('main.index') }}#how-it-works" class="hover:text-white transition">How It Works</a></li>
+                        <li><a href="{{ url_for('main.index') }}#features" class="hover:text-white transition">Features</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="{{ url_for('main.index') }}" class="hover:text-white transition">Home</a></li>
+                        <li><a href="{{ url_for('auth.register') }}" class="hover:text-white transition">Get Started</a></li>
+                        <li><a href="{{ url_for('products.browse') }}" class="hover:text-white transition">Browse Items</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
+                <p>&copy; 2026 Traceable Marketplace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    {% block extra_js %}
+    {% if current_user.is_authenticated %}
+    <script>
+    (function() {
+        const evtSource = new EventSource("{{ url_for('notifications.stream') }}");
+        evtSource.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const badges = document.querySelectorAll('[data-notification-badge]');
+            badges.forEach(badge => {
+                badge.textContent = data.count;
+                badge.style.display = data.count > 0 ? 'flex' : 'none';
+            });
+        };
+        evtSource.onerror = function() {
+            evtSource.close();
+            setTimeout(() => location.reload(), 30000);
+        };
+    })();
+    </script>
+    {% endif %}
+    {% endblock %}
+</body>
+</html>

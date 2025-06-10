@@ -1,0 +1,210 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Activity Logs - {{ product.name }} - Admin{% endblock %}
+{% block admin_page_title %}Activity Logs: {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="w-full">
+    <!-- Back Button & Product Info -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('admin.admin_products') }}" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Products
+            </a>
+            <div class="h-6 w-px bg-gray-300"></div>
+            <div class="flex items-center gap-3">
+                {% if product.image_urls %}
+                    <img src="{{ product.image_urls[0] }}" alt="" class="w-10 h-10 rounded-lg object-cover">
+                {% endif %}
+                <div>
+                    <p class="font-semibold text-gray-900">{{ product.name }}</p>
+                    <p class="text-xs text-gray-500 font-mono">{{ product.unique_code }}</p>
+                </div>
+            </div>
+        </div>
+        <a href="{{ url_for('products.product_detail', product_code=product.unique_code) }}" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium text-sm">
+            <i class="fas fa-external-link-alt mr-1"></i> View Product
+        </a>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Total Views</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_views }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-eye text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Total Searches</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_searches }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-search text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Total Activities</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ activities.total }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-chart-line text-green-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-4 mb-6">
+        <form method="GET" action="{{ url_for('admin.product_logs', product_id=product.id) }}" class="flex items-center gap-4">
+            <label class="text-sm font-medium text-gray-700">Filter by Type:</label>
+            <select name="type" class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-sm" onchange="this.form.submit()">
+                <option value="">All Activities</option>
+                <option value="view" {% if activity_type == 'view' %}selected{% endif %}>Views</option>
+                <option value="search" {% if activity_type == 'search' %}selected{% endif %}>Searches</option>
+            </select>
+        </form>
+    </div>
+    
+    <!-- Activities Table -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">User</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">IP Address</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Details</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for activity in activities.items %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4">
+                                {% if activity.activity_type == 'view' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                        <i class="fas fa-eye mr-1"></i> View
+                                    </span>
+                                {% elif activity.activity_type == 'search' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                                        <i class="fas fa-search mr-1"></i> Search
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                        {{ activity.activity_type }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if activity.user %}
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-7 h-7 gradient-bg rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                            {{ activity.user.username[0].upper() }}
+                                        </div>
+                                        <span class="text-gray-900 text-sm">{{ activity.user.username }}</span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-gray-400 text-sm italic">Anonymous</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-gray-600 text-sm font-mono">
+                                {{ activity.ip_address or 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if activity.activity_type == 'search' and activity.activity_data and activity.activity_data.search_query %}
+                                    <span class="text-gray-700 text-sm">"{{ activity.activity_data.search_query }}"</span>
+                                {% elif activity.activity_type == 'view' %}
+                                    <span class="text-gray-700 text-sm">Viewed product page</span>
+                                {% elif activity.activity_type == 'wishlist_add' %}
+                                    <span class="text-green-600 text-sm">Added to wishlist</span>
+                                {% elif activity.activity_type == 'wishlist_remove' %}
+                                    <span class="text-orange-600 text-sm">Removed from wishlist</span>
+                                {% elif activity.activity_type == 'review_submitted' %}
+                                    <span class="text-gray-700 text-sm">Rating: {{ activity.activity_data.rating }}/5 stars</span>
+                                {% elif activity.activity_type == 'checkout_view' %}
+                                    <span class="text-gray-700 text-sm">Price: {{ activity.activity_data.price }}</span>
+                                {% elif activity.activity_type == 'transfer_initiated' %}
+                                    <span class="text-blue-600 text-sm">Price: {{ activity.activity_data.price }}</span>
+                                {% elif activity.activity_type == 'receipt_uploaded' %}
+                                    <span class="text-gray-700 text-sm">Payment receipt uploaded</span>
+                                {% elif activity.activity_type == 'transfer_completed' %}
+                                    <span class="text-green-600 text-sm">Completed - Price: {{ activity.activity_data.price }}</span>
+                                {% elif activity.activity_type == 'transfer_rejected' %}
+                                    <span class="text-red-600 text-sm">Rejected - {{ activity.activity_data.reason or 'No reason given' }}</span>
+                                {% elif activity.activity_type == 'register' %}
+                                    <span class="text-green-600 text-sm">New user: {{ activity.activity_data.username }}</span>
+                                {% elif activity.activity_type == 'login' %}
+                                    <span class="text-blue-600 text-sm">Session started</span>
+                                {% elif activity.activity_type == 'logout' %}
+                                    <span class="text-gray-600 text-sm">Session ended</span>
+                                {% elif activity.activity_type == 'admin_product_approve' %}
+                                    <span class="text-green-600 text-sm">Product approved</span>
+                                {% elif activity.activity_type == 'admin_product_reject' %}
+                                    <span class="text-red-600 text-sm">Rejected: {{ activity.activity_data.reason or 'No reason given' }}</span>
+                                {% elif activity.activity_type == 'admin_product_toggle' %}
+                                    <span class="text-gray-700 text-sm">Status: {{ activity.activity_data.new_status }}</span>
+                                {% elif activity.activity_type == 'admin_product_delete' %}
+                                    <span class="text-red-600 text-sm">Product deleted</span>
+                                {% elif activity.activity_type == 'admin_user_toggle' %}
+                                    <span class="text-gray-700 text-sm">User {{ activity.activity_data.new_status }}</span>
+                                {% elif activity.activity_type == 'admin_user_suspend' %}
+                                    <span class="text-orange-600 text-sm">Suspended for {{ activity.activity_data.duration }} days</span>
+                                {% elif activity.activity_type == 'admin_user_unsuspend' %}
+                                    <span class="text-green-600 text-sm">Suspension lifted</span>
+                                {% elif activity.activity_type == 'admin_user_verify' %}
+                                    <span class="text-blue-600 text-sm">Email verified</span>
+                                {% elif activity.activity_type == 'admin_user_delete' %}
+                                    <span class="text-red-600 text-sm">User deleted</span>
+                                {% else %}
+                                    <span class="text-gray-400 text-sm">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-gray-500 text-sm">
+                                {{ activity.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                <i class="fas fa-inbox text-4xl mb-3"></i>
+                                <p>No activity logs found.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if activities.pages > 1 %}
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-500">
+                Showing {{ activities.first }} to {{ activities.last }} of {{ activities.total }} results
+            </p>
+            <div class="flex gap-2">
+                {% if activities.has_prev %}
+                    <a href="{{ url_for('admin.product_logs', product_id=product.id, page=activities.prev_num, type=activity_type) }}" 
+                       class="px-3 py-1 rounded-lg bg-white border border-gray-300 text-sm hover:bg-gray-50">Previous</a>
+                {% endif %}
+                {% if activities.has_next %}
+                    <a href="{{ url_for('admin.product_logs', product_id=product.id, page=activities.next_num, type=activity_type) }}" 
+                       class="px-3 py-1 rounded-lg bg-white border border-gray-300 text-sm hover:bg-gray-50">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

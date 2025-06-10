@@ -1,0 +1,71 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Analytics - Admin{% endblock %}
+{% block admin_page_title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Top Products -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">
+                <i class="fas fa-trophy text-amber-500 mr-2"></i> Top Selling Products
+            </h3>
+            {% if top_products %}
+                <div class="space-y-3">
+                    {% for product in top_products %}
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                {{ loop.index }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium text-gray-900 truncate">{{ product.name }}</p>
+                                <p class="text-xs text-gray-500">{{ product.unique_code }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-indigo-600">¥{{ "%.2f"|format(product.total_revenue|float) }}</p>
+                                <p class="text-xs text-gray-500">{{ product.sales_count }} sales</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-chart-line text-gray-300 text-4xl mb-3"></i>
+                    <p class="text-gray-500">No sales data yet</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Top Creators by Royalty -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">
+                <i class="fas fa-crown text-amber-500 mr-2"></i> Top Creators by Royalty
+            </h3>
+            {% if top_creators %}
+                <div class="space-y-3">
+                    {% for creator in top_creators %}
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                {{ loop.index }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium text-gray-900">{{ creator.username }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-amber-600">¥{{ "%.2f"|format(creator.total_royalty|float) }}</p>
+                                <p class="text-xs text-gray-500">total royalties</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-crown text-gray-300 text-4xl mb-3"></i>
+                    <p class="text-gray-500">No royalty data yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

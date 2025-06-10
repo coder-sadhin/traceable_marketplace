@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Receipt - Traceable Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Upload Payment Receipt</h1>
+        <p class="text-gray-600 mt-1">Prove your payment to the seller</p>
+    </div>
+    
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+        <!-- Order Info -->
+        <div class="bg-gray-50 rounded-xl p-4 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-sm text-gray-500">Product</p>
+                    <p class="font-semibold text-gray-900">{{ product.name }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">Amount Paid</p>
+                    <p class="font-bold text-indigo-600">¥{{ "%.2f"|format(transfer.sale_price|float) }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upload Form -->
+        <form method="POST" action="" enctype="multipart/form-data" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Payment Receipt</label>
+                <img id="receiptPreview" src="" alt="Receipt Preview" class="w-full max-h-64 rounded-xl border-2 border-gray-200 object-contain mb-3 hidden">
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-indigo-500 transition cursor-pointer" 
+                     onclick="document.getElementById('receipt').click()"
+                     ondragover="event.preventDefault(); this.classList.add('border-indigo-500', 'bg-indigo-50')"
+                     ondragleave="this.classList.remove('border-indigo-500', 'bg-indigo-50')"
+                     ondrop="event.preventDefault(); handleDrop(event)">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-600 font-medium">Click or drag receipt here</p>
+                    <p class="text-sm text-gray-400 mt-1">PNG, JPG up to 5MB</p>
+                    <input type="file" id="receipt" name="receipt" accept="image/*" class="hidden" required 
+                           onchange="handleReceiptChange(this)">
+                    <p id="filename" class="text-sm text-indigo-600 mt-2 font-medium"></p>
+                </div>
+                <script>
+                function handleReceiptChange(input) {
+                    if (input.files && input.files[0]) {
+                        document.getElementById('filename').textContent = input.files[0].name;
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const preview = document.getElementById('receiptPreview');
+                            preview.src = e.target.result;
+                            preview.classList.remove('hidden');
+                            document.getElementById('dropZone').classList.add('hidden');
+                        };
+                        reader.readAsDataURL(input.files[0]);
+                    }
+                }
+                function handleDrop(event) {
+                    const files = event.dataTransfer.files;
+                    document.getElementById('receipt').files = files;
+                    document.getElementById('dropZone').classList.remove('border-indigo-500', 'bg-indigo-50');
+                    handleReceiptChange(document.getElementById('receipt'));
+                }
+                </script>
+            </div>
+            
+            <button type="submit" class="w-full gradient-bg text-white py-4 rounded-xl font-semibold hover:opacity-90 transition shadow-lg text-lg">
+                <i class="fas fa-upload mr-2"></i> Upload Receipt
+            </button>
+        </form>
+        
+        <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+            <p class="text-sm text-blue-800">
+                <i class="fas fa-clock mr-1"></i>
+                The seller has 24 hours to verify your payment. You'll be notified once confirmed.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

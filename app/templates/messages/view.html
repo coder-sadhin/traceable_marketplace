@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ message.subject }} - Message{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-gray-500 mb-6">
+        <a href="{{ url_for('messages.inbox') }}" class="hover:text-indigo-600">Inbox</a>
+        <i class="fas fa-chevron-right mx-2 text-xs"></i>
+        <span class="text-gray-900 truncate max-w-xs">{{ message.subject }}</span>
+    </nav>
+
+    <!-- Message Card -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h1 class="text-xl font-bold text-gray-900 mb-3">{{ message.subject }}</h1>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 text-sm text-gray-600">
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500">From:</span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 gradient-bg rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                            {{ message.sender.username[0].upper() }}
+                        </div>
+                        <a href="{{ url_for('users.public_profile', username=message.sender.username) }}" class="font-medium text-gray-900 hover:text-indigo-600 transition">
+                            {{ message.sender.username }}
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500">To:</span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-xs font-semibold">
+                            {{ message.receiver.username[0].upper() }}
+                        </div>
+                        <a href="{{ url_for('users.public_profile', username=message.receiver.username) }}" class="font-medium text-gray-900 hover:text-indigo-600 transition">
+                            {{ message.receiver.username }}
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-clock text-gray-400"></i>
+                    <span>{{ message.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Link -->
+        {% if message.product %}
+            <div class="mx-6 mt-4">
+                <a href="{{ url_for('products.product_detail', product_code=message.product.unique_code) }}"
+                   class="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition">
+                    <div class="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                        {% if message.product.image_urls %}
+                            <img src="{{ message.product.image_urls[0] }}" alt="" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                <i class="fas fa-image text-xs"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-indigo-900">Regarding: {{ message.product.name }}</p>
+                        <p class="text-xs text-indigo-600 font-mono">{{ message.product.unique_code }}</p>
+                    </div>
+                    <i class="fas fa-external-link-alt text-indigo-400 ml-auto text-sm"></i>
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Body -->
+        <div class="px-6 py-6">
+            <div class="text-gray-700 leading-relaxed whitespace-pre-wrap">{{ message.body }}</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+            <a href="{{ url_for('messages.compose', receiver_id=message.sender.id, product_id=message.product.id if message.product else '') }}"
+               class="gradient-bg text-white px-5 py-2.5 rounded-lg font-medium hover:opacity-90 transition shadow-md">
+                <i class="fas fa-reply mr-2"></i> Reply
+            </a>
+            <form method="POST" action="{{ url_for('messages.delete_message', message_id=message.id) }}" class="inline"
+                  onsubmit="return confirm('Delete this message?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="px-5 py-2.5 rounded-lg border border-red-300 text-red-600 font-medium hover:bg-red-50 transition">
+                    <i class="fas fa-trash mr-2"></i> Delete
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Back to Inbox -->
+    <div class="text-center">
+        <a href="{{ url_for('messages.inbox') }}" class="text-gray-600 hover:text-indigo-600 font-medium transition">
+            <i class="fas fa-arrow-left mr-1"></i> Back to Inbox
+        </a>
+    </div>
+</div>
+{% endblock %}

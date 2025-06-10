@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - Traceable Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Notifications</h1>
+            <p class="text-gray-600 mt-1">Stay updated on your activity</p>
+        </div>
+        {% if notifications %}
+            <form method="POST" action="{{ url_for('notifications.mark_all_read') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                    <i class="fas fa-check-double mr-1"></i> Mark all as read
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if announcements or notifications %}
+    <div class="space-y-3">
+
+        <!-- Announcements Section -->
+        {% if announcements %}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <i class="fas fa-bullhorn text-indigo-500"></i> Announcements
+            </h2>
+            <div class="space-y-2">
+                {% for announcement in announcements %}
+                <div class="rounded-xl p-4 flex items-start gap-3 border
+                    {% if announcement.announcement_type == 'urgent' %}bg-red-50 border-red-200
+                    {% elif announcement.announcement_type == 'warning' %}bg-amber-50 border-amber-200
+                    {% else %}bg-blue-50 border-blue-200{% endif %}">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5
+                        {% if announcement.announcement_type == 'urgent' %}bg-red-100 text-red-600
+                        {% elif announcement.announcement_type == 'warning' %}bg-amber-100 text-amber-600
+                        {% else %}bg-blue-100 text-blue-600{% endif %}">
+                        <i class="fas text-sm
+                            {% if announcement.announcement_type == 'urgent' %}fa-exclamation-triangle
+                            {% elif announcement.announcement_type == 'warning' %}fa-exclamation-circle
+                            {% else %}fa-info-circle{% endif %}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-semibold text-gray-900">{{ announcement.title }}</h3>
+                        <p class="text-sm text-gray-600 mt-0.5">{{ announcement.content }}</p>
+                        <span class="text-xs text-gray-400 mt-1 block">{{ announcement.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Personal Notifications -->
+        {% if notifications %}
+        {% if announcements %}
+        <div class="border-t border-gray-200 pt-4 mt-2">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <i class="fas fa-bell text-indigo-500"></i> Your Activity
+            </h2>
+        </div>
+        {% endif %}
+        {% for notification in notifications %}
+            <div class="bg-white rounded-xl shadow-sm border {% if not notification.is_read %}border-indigo-200 bg-indigo-50/30{% else %}border-gray-100{% endif %} p-5 transition hover:shadow-md">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center
+                        {% if notification.notification_type == 'success' %}bg-green-100 text-green-600
+                        {% elif notification.notification_type == 'error' %}bg-red-100 text-red-600
+                        {% elif notification.notification_type == 'warning' %}bg-amber-100 text-amber-600
+                        {% else %}bg-blue-100 text-blue-600{% endif %}">
+                        <i class="fas {% if notification.notification_type == 'success' %}fa-check{% elif notification.notification_type == 'error' %}fa-exclamation{% elif notification.notification_type == 'warning' %}fa-exclamation-triangle{% else %}fa-bell{% endif %}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-900 {% if not notification.is_read %}text-indigo-900{% endif %}">{{ notification.title }}</h3>
+                            <span class="text-xs text-gray-400 whitespace-nowrap ml-2">{{ notification.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">{{ notification.message }}</p>
+                    </div>
+                    {% if not notification.is_read %}
+                        <form method="POST" action="{{ url_for('notifications.mark_read', notification_id=notification.id) }}" class="flex-shrink-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-3 py-1 rounded-full hover:bg-indigo-100 transition">
+                                Mark read
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    {% else %}
+        <div class="bg-gray-50 rounded-2xl p-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-bell-slash text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">No notifications yet</h3>
+            <p class="text-gray-600 mt-1">We'll notify you when something happens!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

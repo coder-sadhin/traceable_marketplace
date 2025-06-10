@@ -1,0 +1,278 @@
+{% extends "admin/base.html" %}
+
+{% block title %}User Management - Admin{% endblock %}
+{% block admin_page_title %}User Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Search & Filter -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 mb-6">
+        <form method="GET" action="{{ url_for('admin.users') }}" class="flex flex-col sm:flex-row gap-3">
+            <div class="flex-1">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                    <input type="text" name="search" value="{{ request.args.get('search', '') }}" 
+                           placeholder="Search by username or email..." 
+                           class="w-full pl-11 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-sm">
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <select name="role" class="px-3 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-sm">
+                    <option value="">All Roles</option>
+                    <option value="user" {% if request.args.get('role') == 'user' %}selected{% endif %}>User</option>
+                    <option value="admin" {% if request.args.get('role') == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+                <button type="submit" class="gradient-bg text-white px-5 py-3 rounded-lg font-medium hover:opacity-90 transition text-sm">
+                    <i class="fas fa-filter mr-1"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Users Table -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <!-- Desktop Table -->
+        <div class="hidden md:block overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">User</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Joined</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for user in users.items %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                {% if user.profile_image %}
+                                    <img src="{{ user.profile_image }}" alt="" class="w-9 h-9 rounded-full object-cover">
+                                {% else %}
+                                    <div class="w-9 h-9 gradient-bg rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                        {{ user.username[0].upper() }}
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <a href="{{ url_for('users.public_profile', username=user.username) }}" class="font-medium text-gray-900 hover:text-indigo-600">{{ user.username }}</a>
+                                    <div class="flex gap-1 mt-0.5">
+                                        {% if not user.is_verified %}
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">Unverified</span>
+                                        {% endif %}
+                                        {% if user.is_suspended() %}
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">Suspended</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-gray-600 text-sm">{{ user.email }}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium 
+                                {% if user.role == 'admin' %}bg-purple-100 text-purple-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ user.role.title() }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium 
+                                {% if user.is_active and not user.is_suspended() %}bg-green-100 text-green-700
+                                {% else %}bg-red-100 text-red-700{% endif %}">
+                                {% if user.is_suspended() %}Suspended
+                                {% elif user.is_active %}Active
+                                {% else %}Inactive{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 text-sm">{{ user.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                                {% if not user.is_verified and user.role != 'admin' %}
+                                    <form method="POST" action="{{ url_for('admin.verify_user', user_id=user.id) }}" class="inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition" title="Verify Email">
+                                            <i class="fas fa-check-double mr-1"></i> Verify
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {% if user.role != 'admin' %}
+                                    {% if user.is_suspended() %}
+                                        <form method="POST" action="{{ url_for('admin.unsuspend_user', user_id=user.id) }}" class="inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition" title="Unsuspend">
+                                                <i class="fas fa-unlock mr-1"></i> Unsuspend
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <button onclick="document.getElementById('suspend-{{ user.id }}').classList.remove('hidden')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 transition" title="Suspend">
+                                            <i class="fas fa-ban mr-1"></i> Suspend
+                                        </button>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('admin.toggle_user', user_id=user.id) }}" class="inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="px-2.5 py-1 rounded-lg text-xs font-medium {% if user.is_active %}bg-red-100 text-red-700 hover:bg-red-200{% else %}bg-green-100 text-green-700 hover:bg-green-200{% endif %} transition">
+                                            {{ 'Deactivate' if user.is_active else 'Activate' }}
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="inline" onsubmit="return confirm('Delete user {{ user.username }}? This cannot be undone.')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-xs text-gray-400 italic">Admin</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="md:hidden divide-y divide-gray-100">
+            {% for user in users.items %}
+            <div class="p-4">
+                <div class="flex items-start gap-3">
+                    {% if user.profile_image %}
+                        <img src="{{ user.profile_image }}" alt="" class="w-11 h-11 rounded-full object-cover flex-shrink-0">
+                    {% else %}
+                        <div class="w-11 h-11 gradient-bg rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            {{ user.username[0].upper() }}
+                        </div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <a href="{{ url_for('users.public_profile', username=user.username) }}" class="font-semibold text-gray-900">{{ user.username }}</a>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-medium 
+                                {% if user.role == 'admin' %}bg-purple-100 text-purple-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ user.role.title() }}
+                            </span>
+                            {% if not user.is_verified %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">Unverified</span>
+                            {% endif %}
+                            {% if user.is_suspended() %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">Suspended</span>
+                            {% elif not user.is_active %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">Inactive</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-500 mt-0.5">{{ user.email }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Joined {{ user.created_at.strftime('%b %d, %Y') }}</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    {% if not user.is_verified and user.role != 'admin' %}
+                        <form method="POST" action="{{ url_for('admin.verify_user', user_id=user.id) }}" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                                <i class="fas fa-check-double mr-1"></i> Verify
+                            </button>
+                        </form>
+                    {% endif %}
+                    {% if user.role != 'admin' %}
+                        {% if user.is_suspended() %}
+                            <form method="POST" action="{{ url_for('admin.unsuspend_user', user_id=user.id) }}" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition">
+                                    <i class="fas fa-unlock mr-1"></i> Unsuspend
+                                </button>
+                            </form>
+                        {% else %}
+                            <button onclick="document.getElementById('suspend-{{ user.id }}').classList.remove('hidden')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 transition">
+                                <i class="fas fa-ban mr-1"></i> Suspend
+                            </button>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('admin.toggle_user', user_id=user.id) }}" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium {% if user.is_active %}bg-red-100 text-red-700 hover:bg-red-200{% else %}bg-green-100 text-green-700 hover:bg-green-200{% endif %} transition">
+                                {{ 'Deactivate' if user.is_active else 'Activate' }}
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="inline" onsubmit="return confirm('Delete {{ user.username }}?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Empty State -->
+        {% if not users.items %}
+            <div class="p-12 text-center text-gray-500">
+                <i class="fas fa-users text-gray-300 text-4xl mb-3 block"></i>
+                <p>No users found</p>
+            </div>
+        {% endif %}
+        
+        <!-- Pagination -->
+        {% if users.has_prev or users.has_next %}
+            {% set qargs = request.args.copy() %}{% set _ = qargs.pop('page', None) %}
+            <div class="px-4 sm:px-6 py-4 border-t border-gray-100 flex justify-center">
+                <div class="flex space-x-2">
+                    {% if users.has_prev %}
+                        <a href="{{ url_for('admin.users', page=users.prev_num, **qargs) }}" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    {% endif %}
+                    <span class="px-4 py-2 rounded-lg gradient-bg text-white font-medium">{{ users.page }}</span>
+                    {% if users.has_next %}
+                        <a href="{{ url_for('admin.users', page=users.next_num, **qargs) }}" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Suspend Modals (one per user) -->
+{% for user in users.items %}
+{% if user.role != 'admin' and not user.is_suspended() %}
+<div id="suspend-{{ user.id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50" onclick="document.getElementById('suspend-{{ user.id }}').classList.add('hidden')"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 fade-in">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Suspend User</h3>
+        <p class="text-sm text-gray-500 mb-3">Suspending: <strong>{{ user.username }}</strong></p>
+        <form method="POST" action="{{ url_for('admin.suspend_user', user_id=user.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="space-y-3 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration (days)</label>
+                    <select name="duration" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm">
+                        <option value="1">1 day</option>
+                        <option value="3">3 days</option>
+                        <option value="7" selected>7 days</option>
+                        <option value="14">14 days</option>
+                        <option value="30">30 days</option>
+                        <option value="90">90 days</option>
+                        <option value="365">1 year (365 days)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                    <textarea name="reason" rows="2" placeholder="Reason for suspension..." required
+                              class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('suspend-{{ user.id }}').classList.add('hidden')"
+                        class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 text-sm">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-amber-600 text-white font-medium hover:bg-amber-700 text-sm">Suspend</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}

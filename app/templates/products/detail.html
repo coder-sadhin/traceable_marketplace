@@ -1,0 +1,697 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Traceable Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center text-sm text-gray-500 mb-6">
+        <a href="{{ url_for('main.index') }}" class="hover:text-indigo-600">Home</a>
+        <i class="fas fa-chevron-right mx-2 text-xs"></i>
+        <a href="{{ url_for('products.browse') }}" class="hover:text-indigo-600">Browse</a>
+        <i class="fas fa-chevron-right mx-2 text-xs"></i>
+        <span class="text-gray-900">{{ product.name }}</span>
+    </nav>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Images -->
+        {% if product.image_urls and product.image_urls|length > 0 %}
+        <div class="space-y-4">
+            <!-- Main Image -->
+            <div class="relative group rounded-2xl overflow-hidden bg-white" id="imageGallery">
+                <div class="aspect-square bg-gray-50 relative overflow-hidden cursor-zoom-in">
+                    <img id="mainImage" 
+                         src="{{ product.image_urls[0] }}" 
+                         alt="{{ product.name }}" 
+                         class="w-full h-full object-cover transition-all duration-300 ease-out hover:scale-105">
+                    
+                    {% if product.image_urls|length > 1 %}
+                    <!-- Navigation Arrows -->
+                    <button id="prevBtn" 
+                            class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white hover:shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
+                        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <button id="nextBtn" 
+                            class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white hover:shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
+                        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- Counter -->
+                    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full">
+                        <span id="mainCounter">1 / {{ product.image_urls|length }}</span>
+                    </div>
+                    
+                    <!-- Image Zoom Hint -->
+                    <div class="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white/80 text-xs px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                        </svg>
+                        Click to zoom
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Thumbnails -->
+            {% if product.image_urls|length > 1 %}
+            <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {% for img_url in product.image_urls %}
+                <button id="thumb-{{ loop.index0 }}" 
+                        class="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 cursor-pointer {% if loop.first %}border-indigo-600 shadow-md{% else %}border-transparent hover:border-gray-300 opacity-70 hover:opacity-100{% endif %}">
+                    <img src="{{ img_url }}" alt="{{ product.name }} - {{ loop.index }}" class="w-full h-full object-cover">
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="rounded-2xl bg-gray-50 aspect-square flex items-center justify-center text-gray-300">
+            <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        {% endif %}
+        
+        <!-- Lightbox -->
+        {% if product.image_urls and product.image_urls|length > 1 %}
+        <div id="lightbox" class="fixed inset-0 z-[100] bg-black/95 hidden items-center justify-center opacity-0 transition-opacity duration-300">
+            <!-- Close -->
+            <button id="closeLbBtn" class="absolute top-6 right-6 w-11 h-11 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition backdrop-blur-sm z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            
+            <!-- Prev -->
+            <button id="prevLbBtn" class="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition backdrop-blur-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            
+            <!-- Next -->
+            <button id="nextLbBtn" class="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition backdrop-blur-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+            
+            <!-- Lightbox Image -->
+            <div id="lbImgWrap" class="max-w-[90vw] max-h-[85vh] flex items-center justify-center cursor-pointer p-4">
+                <img id="lbImage" src="{{ product.image_urls[0] }}" alt="{{ product.name }}" class="max-w-[85vw] max-h-[80vh] object-contain cursor-zoom-in transition-all duration-300">
+            </div>
+            
+            <!-- Counter -->
+            <div class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full font-medium">
+                <span id="lbCounter">1 / {{ product.image_urls|length }}</span>
+            </div>
+            
+            <!-- Thumbnails -->
+            <div class="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-2">
+                {% for img_url in product.image_urls %}
+                <button id="lb-thumb-{{ loop.index0 }}" class="w-12 h-12 rounded-lg overflow-hidden border-2 transition-all duration-200 {% if loop.first %}border-white ring-2 ring-white/30 opacity-100{% else %}border-white/30 opacity-50 hover:opacity-80{% endif %}">
+                    <img src="{{ img_url }}" alt="" class="w-full h-full object-cover">
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        </style>
+        
+        <script>
+        (function(){
+            var images = {{ product.image_urls|tojson|safe }};
+            var cur = 0, lb = 0, zoomed = false;
+            
+            function updateMain() {
+                var img = document.getElementById('mainImage');
+                img.style.opacity = '0';
+                setTimeout(function() {
+                    img.src = images[cur];
+                    img.style.opacity = '1';
+                }, 150);
+                document.getElementById('mainCounter').textContent = (cur+1) + ' / ' + images.length;
+                for (var i=0; i<images.length; i++) {
+                    var t = document.getElementById('thumb-'+i);
+                    if (t) {
+                        t.className = 'flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 cursor-pointer ' + 
+                            (i===cur ? 'border-indigo-600 shadow-md' : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100');
+                    }
+                }
+            }
+            
+            function updateLbThumbs() {
+                for (var i=0; i<images.length; i++) {
+                    var t = document.getElementById('lb-thumb-'+i);
+                    if (t) {
+                        t.className = 'w-12 h-12 rounded-lg overflow-hidden border-2 transition-all duration-200 ' + 
+                            (i===lb ? 'border-white ring-2 ring-white/30 opacity-100' : 'border-white/30 opacity-50 hover:opacity-80');
+                    }
+                }
+            }
+            
+            // Main nav
+            document.getElementById('prevBtn').onclick = function(e){ e.stopPropagation(); cur=(cur-1+images.length)%images.length; updateMain(); };
+            document.getElementById('nextBtn').onclick = function(e){ e.stopPropagation(); cur=(cur+1)%images.length; updateMain(); };
+            
+            // Thumbnails
+            for (var i=0; i<images.length; i++) {
+                document.getElementById('thumb-'+i).onclick = (function(idx){ return function(){ cur=idx; updateMain(); }; })(i);
+            }
+            
+            // Open lightbox
+            document.getElementById('imageGallery').onclick = function(e){
+                if (!e.target.closest('button')) {
+                    lb=cur; document.getElementById('lbImage').src=images[lb];
+                    document.getElementById('lbCounter').textContent=(lb+1)+' / '+images.length;
+                    var lbEl = document.getElementById('lightbox');
+                    lbEl.classList.remove('hidden');
+                    lbEl.classList.add('flex');
+                    setTimeout(function(){ lbEl.style.opacity = '1'; }, 10);
+                    document.body.style.overflow='hidden'; zoomed=false;
+                    document.getElementById('lbImage').style.transform='scale(1)';
+                    updateLbThumbs();
+                }
+            };
+            
+            // Close lightbox
+            document.getElementById('closeLbBtn').onclick = function(){
+                var lbEl = document.getElementById('lightbox');
+                lbEl.style.opacity = '0';
+                setTimeout(function(){ lbEl.classList.add('hidden'); lbEl.classList.remove('flex'); }, 300);
+                document.body.style.overflow='';
+            };
+            
+            // Lightbox nav
+            document.getElementById('prevLbBtn').onclick = function(e){ e.stopPropagation(); lb=(lb-1+images.length)%images.length; document.getElementById('lbImage').src=images[lb]; document.getElementById('lbCounter').textContent=(lb+1)+' / '+images.length; zoomed=false; document.getElementById('lbImage').style.transform='scale(1)'; updateLbThumbs(); };
+            document.getElementById('nextLbBtn').onclick = function(e){ e.stopPropagation(); lb=(lb+1)%images.length; document.getElementById('lbImage').src=images[lb]; document.getElementById('lbCounter').textContent=(lb+1)+' / '+images.length; zoomed=false; document.getElementById('lbImage').style.transform='scale(1)'; updateLbThumbs(); };
+            
+            // Zoom
+            document.getElementById('lbImgWrap').onclick = function(e){ e.stopPropagation(); zoomed=!zoomed; document.getElementById('lbImage').style.transform = zoomed?'scale(1.8)':'scale(1)'; document.getElementById('lbImage').style.maxWidth = zoomed?'none':'85vw'; document.getElementById('lbImage').style.maxHeight = zoomed?'none':'80vh'; document.getElementById('lbImage').style.cursor = zoomed?'zoom-out':'zoom-in'; };
+            
+            // Click outside
+            document.getElementById('lightbox').onclick = function(e){ if(e.target===this){ var lbEl = document.getElementById('lightbox'); lbEl.style.opacity = '0'; setTimeout(function(){ lbEl.classList.add('hidden'); lbEl.classList.remove('flex'); }, 300); document.body.style.overflow=''; } };
+            
+            // LB thumbnails
+            for (var i=0; i<images.length; i++) {
+                document.getElementById('lb-thumb-'+i).onclick = (function(idx){ return function(){ lb=idx; document.getElementById('lbImage').src=images[lb]; document.getElementById('lbCounter').textContent=(lb+1)+' / '+images.length; zoomed=false; document.getElementById('lbImage').style.transform='scale(1)'; updateLbThumbs(); }; })(i);
+            }
+            
+            // Keyboard
+            document.onkeydown = function(e){
+                var lbEl = document.getElementById('lightbox');
+                if (!lbEl.classList.contains('hidden')) {
+                    if (e.key==='Escape') { lbEl.style.opacity = '0'; setTimeout(function(){ lbEl.classList.add('hidden'); lbEl.classList.remove('flex'); }, 300); document.body.style.overflow=''; }
+                    if (e.key==='ArrowLeft') { lb=(lb-1+images.length)%images.length; document.getElementById('lbImage').src=images[lb]; document.getElementById('lbCounter').textContent=(lb+1)+' / '+images.length; updateLbThumbs(); }
+                    if (e.key==='ArrowRight') { lb=(lb+1)%images.length; document.getElementById('lbImage').src=images[lb]; document.getElementById('lbCounter').textContent=(lb+1)+' / '+images.length; updateLbThumbs(); }
+                }
+            };
+        })();
+        </script>
+        {% endif %}
+        
+        <!-- Product Info -->
+        <div>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                    {{ product.category.replace('_', ' ').title() if product.category else 'Uncategorized' }}
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                    {{ product.condition.replace('_', ' ').title() }}
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium
+                    {% if product.status == 'pending_approval' %}bg-amber-100 text-amber-700
+                    {% elif product.status == 'rejected' %}bg-red-100 text-red-700
+                    {% elif product.status == 'active' %}bg-green-100 text-green-700
+                    {% elif product.status == 'pending_sale' %}bg-blue-100 text-blue-700
+                    {% elif product.status == 'inactive' %}bg-gray-100 text-gray-700
+                    {% endif %}">
+                    {% if product.status == 'pending_approval' %}Pending Review
+                    {% elif product.status == 'rejected' %}Rejected
+                    {% elif product.status == 'active' %}Active
+                    {% elif product.status == 'pending_sale' %}Sale in Progress
+                    {% elif product.status == 'inactive' %}Inactive
+                    {% endif %}
+                </span>
+            </div>
+            
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ product.name }}</h1>
+            <p class="text-gray-500 text-sm mb-4">Code: <span class="font-mono font-medium">{{ product.unique_code }}</span></p>
+            
+            <div class="flex items-baseline gap-2 mb-6">
+                <span class="text-4xl font-bold text-indigo-600">¥{{ "%.2f"|format(product.current_price|float) }}</span>
+                {% if product.original_price and product.current_price != product.original_price %}
+                    <span class="text-lg text-gray-400 line-through">¥{{ "%.2f"|format(product.original_price|float) }}</span>
+                {% endif %}
+            </div>
+            
+            <!-- Creator & Owner Info -->
+            <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <a href="{{ url_for('users.public_profile', username=product.creator.username) }}" class="flex items-center gap-3 hover:bg-gray-100 rounded-lg p-2 -m-2 transition">
+                        {% if product.creator.profile_image %}
+                            <img src="{{ product.creator.profile_image }}" alt="" class="w-10 h-10 rounded-full object-cover">
+                        {% else %}
+                            <div class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">
+                                {{ product.creator.username[0].upper() }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Original Creator</p>
+                            <p class="text-sm text-indigo-600 hover:underline">{{ product.creator.username }}</p>
+                        </div>
+                    </a>
+                    {% if product.creator_id != product.current_owner_id %}
+                        <a href="{{ url_for('users.public_profile', username=product.current_owner.username) }}" class="flex items-center gap-3 hover:bg-gray-100 rounded-lg p-2 -m-2 transition">
+                            {% if product.current_owner.profile_image %}
+                                <img src="{{ product.current_owner.profile_image }}" alt="" class="w-10 h-10 rounded-full object-cover">
+                            {% else %}
+                                <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-semibold">
+                                    {{ product.current_owner.username[0].upper() }}
+                                </div>
+                            {% endif %}
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Current Owner</p>
+                                <p class="text-sm text-indigo-600 hover:underline">{{ product.current_owner.username }}</p>
+                            </div>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="mb-6">
+                <h3 class="font-semibold text-gray-900 mb-2">Description</h3>
+                <p class="text-gray-600 leading-relaxed">{{ product.description or 'No description provided.' }}</p>
+            </div>
+            
+            <!-- Details Grid -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                {% if product.dimensions %}
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-xs text-gray-500">Dimensions</p>
+                        <p class="font-medium text-gray-900">{{ product.dimensions }}</p>
+                    </div>
+                {% endif %}
+                {% if product.weight %}
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-xs text-gray-500">Weight</p>
+                        <p class="font-medium text-gray-900">{{ product.weight }}</p>
+                    </div>
+                {% endif %}
+                {% if product.location %}
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-xs text-gray-500">Location</p>
+                        <p class="font-medium text-gray-900">{{ product.location }}</p>
+                    </div>
+                {% endif %}
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-xs text-gray-500">Type</p>
+                    <p class="font-medium text-gray-900">{{ product.product_type.title() }}</p>
+                </div>
+            </div>
+            
+            <!-- Blockchain Verification Badge -->
+            {% if product.blockchain_record and product.blockchain_record.is_minted %}
+                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-300 p-5 mb-4 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                            <i class="fas fa-check-double text-white text-lg"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="text-sm font-bold text-emerald-800">✓ Verified on Blockchain</p>
+                                <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-200 text-emerald-800">AUTHENTIC</span>
+                            </div>
+                            <p class="text-xs text-emerald-700 font-mono truncate">Token ID: #{{ product.blockchain_record.token_id }}</p>
+                            <p class="text-xs text-emerald-600">Network: {{ product.blockchain_record.network|title }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-emerald-200 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div class="bg-white/70 rounded-lg p-2">
+                            <p class="text-[10px] text-emerald-600 uppercase font-medium mb-1">Contract</p>
+                            <p class="text-xs text-emerald-800 font-mono truncate">{{ product.blockchain_record.contract_address }}</p>
+                        </div>
+                        {% if product.blockchain_record.transaction_hash %}
+                            <div class="bg-white/70 rounded-lg p-2">
+                                <p class="text-[10px] text-emerald-600 uppercase font-medium mb-1">Transaction</p>
+                                <p class="text-xs text-emerald-800 font-mono truncate">{{ product.blockchain_record.transaction_hash }}</p>
+                            </div>
+                        {% endif %}
+                        {% if product.blockchain_record.minted_at %}
+                        <div class="bg-white/70 rounded-lg p-2 sm:col-span-2">
+                            <p class="text-[10px] text-emerald-600 uppercase font-medium mb-1">Minted On</p>
+                            <p class="text-xs text-emerald-800">{{ product.blockchain_record.minted_at.strftime('%B %d, %Y %H:%M:%S') }} UTC</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% elif current_user.is_authenticated and current_user.is_admin() and product.is_approved and not (product.blockchain_record and product.blockchain_record.is_minted) %}
+                <!-- Admin Mint Section -->
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-300 p-5 mb-4 shadow-sm">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                                <i class="fas fa-cube text-white text-lg"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <p class="text-sm font-bold text-amber-800">Blockchain Verification</p>
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-200 text-amber-800">PENDING</span>
+                                </div>
+                                <p class="text-xs text-amber-600">This product has not been minted on the blockchain yet.</p>
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ url_for('admin.mint_product', product_id=product.id) }}" class="flex-shrink-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" 
+                                    class="px-5 py-3 rounded-lg text-sm font-bold bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700 transition shadow-md"
+                                    onclick="return confirm('Mint this product on the blockchain? This action cannot be undone.');">
+                                <i class="fas fa-cube mr-2"></i> Mint Now
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% elif product.status == 'active' %}
+                <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-link text-gray-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Blockchain Pending</p>
+                            <p class="text-xs text-gray-500">This product will be minted on the blockchain</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- QR Code -->
+            {% if product.qr_code_url %}
+                <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6 text-center">
+                    <p class="text-sm font-medium text-gray-700 mb-2">Traceability QR Code</p>
+                    <img src="{{ product.qr_code_url }}" alt="QR Code" class="w-32 h-32 mx-auto mb-3">
+                    <p class="text-xs text-gray-500 mb-3">Scan to verify authenticity</p>
+                    <a href="{{ product.qr_code_url }}" download class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+                        <i class="fas fa-download mr-2"></i> Download QR Code
+                    </a>
+                </div>
+            {% endif %}
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-4 flex-wrap">
+                {% if current_user.is_authenticated %}
+                    <form method="POST" action="{{ url_for('products.toggle_favorite', product_code=product.unique_code) }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="px-6 py-4 rounded-xl border-2 border-red-300 text-red-500 font-semibold hover:bg-red-50 transition" title="Add to Wishlist">
+                            <i class="fas fa-heart mr-2"></i> Wishlist
+                        </button>
+                    </form>
+                {% endif %}
+
+                {% if current_user.is_authenticated and product.current_owner_id != current_user.id and product.is_listed %}
+                    <a href="{{ url_for('orders.checkout', product_code=product.unique_code) }}" class="flex-1 gradient-bg text-white py-4 rounded-xl font-semibold hover:opacity-90 transition shadow-lg text-center text-lg min-w-[140px]">
+                        <i class="fas fa-shopping-cart mr-2"></i> Buy Now
+                    </a>
+                    <a href="{{ url_for('messages.compose', receiver_id=product.current_owner_id, product_id=product.id) }}" class="px-6 py-4 rounded-xl border-2 border-indigo-300 text-indigo-600 font-semibold hover:bg-indigo-50 transition">
+                        <i class="fas fa-comment-dots mr-2"></i> Contact Seller
+                    </a>
+                {% endif %}
+                
+                {% if current_user.is_authenticated and product.current_owner_id == current_user.id %}
+                    <a href="{{ url_for('products.resell_product', product_code=product.unique_code) }}" class="flex-1 bg-gray-100 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-200 transition text-center text-lg min-w-[140px]">
+                        <i class="fas fa-tag mr-2"></i> Resell
+                    </a>
+                {% endif %}
+                
+                {% if current_user.is_authenticated and (product.current_owner_id == current_user.id or product.creator_id == current_user.id) and product.status != 'pending_sale' %}
+                    <a href="{{ url_for('products.edit_product', product_code=product.unique_code) }}" class="px-6 py-4 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                {% endif %}
+                
+                {% if current_user.is_authenticated and product.current_owner_id == current_user.id and product.is_listed and product.status != 'pending_sale' %}
+                    <form method="POST" action="{{ url_for('products.unlist_product', product_code=product.unique_code) }}" class="inline" onsubmit="return confirm('Are you sure you want to unlist this product?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="px-6 py-4 rounded-xl border-2 border-amber-500 text-amber-600 font-semibold hover:bg-amber-50 transition">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </form>
+                {% endif %}
+                
+                {% if current_user.is_authenticated and product.creator_id == current_user.id and product.status != 'pending_sale' %}
+                    <form method="POST" action="{{ url_for('products.delete_product', product_code=product.unique_code) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this product? This cannot be undone.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="px-6 py-4 rounded-xl border-2 border-red-500 text-red-600 font-semibold hover:bg-red-50 transition">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                {% endif %}
+                
+                <a href="{{ url_for('main.trace_product', product_code=product.unique_code) }}" class="px-6 py-4 rounded-xl border-2 border-indigo-600 text-indigo-600 font-semibold hover:bg-indigo-50 transition">
+                    <i class="fas fa-history"></i>
+                </a>
+            </div>
+            
+            <!-- Royalty Info -->
+            {% if product.royalty_percentage and product.royalty_percentage > 0 %}
+                <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p class="text-sm text-amber-800">
+                        <i class="fas fa-crown mr-1"></i> 
+                        {{ product.royalty_percentage }}% royalty goes to original creator on resale
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Ownership History -->
+    {% if history %}
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <i class="fas fa-history text-indigo-500"></i>Ownership & Blockchain History
+            </h2>
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="p-6">
+                    <div class="relative">
+                        <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 via-purple-500 to-emerald-500"></div>
+                        
+                        <!-- Original Creation -->
+                        <div class="relative flex items-start mb-8">
+                            <div class="absolute left-3 w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-4 border-white shadow-lg z-10"></div>
+                            <div class="ml-12 flex-1">
+                                <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                                        <span class="text-sm font-bold text-green-900 flex items-center gap-2">
+                                            <i class="fas fa-plus-circle"></i> Original Creation & Minting
+                                        </span>
+                                        <span class="text-xs text-gray-500 font-medium">{{ product.created_at.strftime('%B %d, %Y') }}</span>
+                                    </div>
+                                    <div class="text-sm text-gray-700">
+                                        Created by <span class="font-semibold">{{ product.creator.username }}</span>
+                                    </div>
+                                    {% if product.original_price %}
+                                    <div class="mt-2 text-sm text-indigo-600 font-bold">
+                                        <i class="fas fa-tag mr-1"></i>Original Price: ¥{{ "%.2f"|format(product.original_price|float) }}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.blockchain_record and product.blockchain_record.is_minted %}
+                                        <div class="mt-4 pt-4 border-t border-green-200">
+                                            <div class="flex items-center gap-2 text-sm text-emerald-700 font-bold mb-3">
+                                                <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                                                    <i class="fas fa-check text-white text-xs"></i>
+                                                </div>
+                                                <span>Minted on Blockchain</span>
+                                                <span class="ml-auto bg-emerald-100 px-2 py-1 rounded text-xs font-mono text-emerald-700">
+                                                    Token #{{ product.blockchain_record.token_id }}
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                                <div class="bg-white rounded-lg p-3 border border-green-100">
+                                                    <p class="text-gray-500 mb-1">Network</p>
+                                                    <p class="font-semibold text-emerald-700">{{ product.blockchain_record.network }}</p>
+                                                </div>
+                                                <div class="bg-white rounded-lg p-3 border border-green-100">
+                                                    <p class="text-gray-500 mb-1">Contract Address</p>
+                                                    <p class="font-mono text-emerald-700 break-all text-[10px]">{{ product.blockchain_record.contract_address }}</p>
+                                                </div>
+                                                {% if product.blockchain_record.transaction_hash %}
+                                                    <div class="bg-white rounded-lg p-3 border border-green-100 sm:col-span-2">
+                                                        <p class="text-gray-500 mb-1">Mint Tx Hash</p>
+                                                        <p class="font-mono text-emerald-700 break-all text-[10px]">{{ product.blockchain_record.transaction_hash }}</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% for transfer in history %}
+                            <div class="relative flex items-start mb-8 last:mb-0">
+                                {% if transfer.has_blockchain_record() %}
+                                    <div class="absolute left-3 w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 border-4 border-white shadow-lg z-10"></div>
+                                {% else %}
+                                    <div class="absolute left-3 w-5 h-5 rounded-full bg-gradient-to-br from-indigo-400 to-purple-600 border-4 border-white shadow-lg z-10"></div>
+                                {% endif %}
+                                <div class="ml-12 flex-1">
+                                    <div class="bg-gray-50 rounded-xl p-5 {% if transfer.has_blockchain_record() %}border border-emerald-200{% endif %}">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                                            <span class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                {% if transfer.has_blockchain_record() %}
+                                                    <i class="fas fa-link text-emerald-600"></i> Blockchain Verified Transfer
+                                                {% else %}
+                                                    <i class="fas fa-exchange-alt text-indigo-600"></i> Ownership Transfer
+                                                {% endif %}
+                                            </span>
+                                            <span class="text-xs text-gray-500 font-medium">
+                                                {{ transfer.transfer_date.strftime('%B %d, %Y %H:%M') if transfer.transfer_date else 'Pending' }}
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Transfer Flow -->
+                                        <div class="flex items-center gap-3 mb-4 flex-wrap">
+                                            <div class="flex items-center gap-2">
+                                                {% if transfer.from_user.profile_image %}
+                                                    <img src="{{ transfer.from_user.profile_image }}" class="w-8 h-8 rounded-full object-cover">
+                                                {% else %}
+                                                    <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs">
+                                                        {{ transfer.from_user.username[0].upper() }}
+                                                    </div>
+                                                {% endif %}
+                                                <span class="font-semibold text-sm">{{ transfer.from_user.username }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-1 px-3 py-1 bg-indigo-100 rounded-full">
+                                                <i class="fas fa-arrow-right text-indigo-600 text-xs"></i>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                {% if transfer.to_user.profile_image %}
+                                                    <img src="{{ transfer.to_user.profile_image }}" class="w-8 h-8 rounded-full object-cover">
+                                                {% else %}
+                                                    <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-bold text-xs">
+                                                        {{ transfer.to_user.username[0].upper() }}
+                                                    </div>
+                                                {% endif %}
+                                                <span class="font-semibold text-sm">{{ transfer.to_user.username }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Price & Fees -->
+                                        <div class="flex flex-wrap items-center gap-4 mb-4 text-sm">
+                                            <span class="text-indigo-600 font-bold">
+                                                <i class="fas fa-tag mr-1"></i>Sale: ¥{{ "%.2f"|format(transfer.sale_price|float) }}
+                                            </span>
+                                            {% if transfer.royalty_amount and transfer.royalty_amount > 0 %}
+                                                <span class="text-amber-600 font-medium">
+                                                    <i class="fas fa-crown mr-1"></i>Royalty: ¥{{ "%.2f"|format(transfer.royalty_amount|float) }}
+                                                </span>
+                                            {% endif %}
+                                            {% if transfer.platform_fee and transfer.platform_fee > 0 %}
+                                                <span class="text-gray-600 font-medium">
+                                                    <i class="fas fa-percentage mr-1"></i>Fee: ¥{{ "%.2f"|format(transfer.platform_fee|float) }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Status Badges -->
+                                        <div class="flex flex-wrap gap-2 mb-3">
+                                            {% if transfer.status == 'completed' %}
+                                                <span class="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                                                    <i class="fas fa-check-circle"></i>Completed
+                                                </span>
+                                            {% elif transfer.status == 'pending' %}
+                                                <span class="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">
+                                                    <i class="fas fa-clock"></i>Pending
+                                                </span>
+                                            {% endif %}
+                                            {% if transfer.seller_paid %}
+                                                <span class="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-medium">
+                                                    <i class="fas fa-money-bill-wave"></i>Seller Paid
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Blockchain Details -->
+                                        {% if transfer.has_blockchain_record() %}
+                                            <div class="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
+                                                <div class="flex items-center gap-2 text-sm text-emerald-700 font-bold mb-3">
+                                                    <div class="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                                                        <i class="fas fa-link text-white text-[10px]"></i>
+                                                    </div>
+                                                    <span>On-Chain Transaction Details</span>
+                                                </div>
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                                    <div class="bg-white rounded-lg p-3 border border-emerald-100">
+                                                        <p class="text-gray-500 mb-1">From Address</p>
+                                                        <p class="font-mono text-emerald-700 break-all text-[10px]">{{ transfer.blockchain_transfer.from_address }}</p>
+                                                    </div>
+                                                    <div class="bg-white rounded-lg p-3 border border-emerald-100">
+                                                        <p class="text-gray-500 mb-1">To Address</p>
+                                                        <p class="font-mono text-emerald-700 break-all text-[10px]">{{ transfer.blockchain_transfer.to_address }}</p>
+                                                    </div>
+                                                    <div class="bg-white rounded-lg p-3 border border-emerald-100">
+                                                        <p class="text-gray-500 mb-1">Tx Hash</p>
+                                                        <p class="font-mono text-emerald-700 break-all text-[10px]">{{ transfer.blockchain_transfer.transaction_hash }}</p>
+                                                    </div>
+                                                    <div class="grid grid-cols-2 gap-2">
+                                                        <div class="bg-white rounded-lg p-3 border border-emerald-100">
+                                                            <p class="text-gray-500 mb-1">Block</p>
+                                                            <p class="font-bold text-emerald-700">#{{ transfer.blockchain_transfer.block_number }}</p>
+                                                        </div>
+                                                        <div class="bg-white rounded-lg p-3 border border-emerald-100">
+                                                            <p class="text-gray-500 mb-1">Gas Used</p>
+                                                            <p class="font-bold text-emerald-700">{{ transfer.blockchain_transfer.gas_used }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% if transfer.blockchain_transfer.confirmed_at %}
+                                                    <div class="mt-2 text-[10px] text-emerald-600">
+                                                        <i class="fas fa-check-double mr-1"></i>Confirmed on {{ transfer.blockchain_transfer.confirmed_at.strftime('%B %d, %Y %H:%M:%S') }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% elif transfer.status == 'completed' %}
+                                            <div class="mt-3 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+                                                <i class="fas fa-info-circle"></i>
+                                                <span>Transfer completed but not yet recorded on blockchain</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <i class="fas fa-history text-indigo-500"></i>Ownership History
+            </h2>
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shield-alt text-2xl text-gray-400"></i>
+                </div>
+                <p class="text-gray-600 mb-2">This item remains with its original creator</p>
+                <p class="text-sm text-gray-400">No transfers recorded yet</p>
+                {% if product.blockchain_record and product.blockchain_record.is_minted %}
+                    <div class="mt-4 inline-flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-200">
+                        <i class="fas fa-link"></i>
+                        <span>Token #{{ product.blockchain_record.token_id }} on {{ product.blockchain_record.network }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

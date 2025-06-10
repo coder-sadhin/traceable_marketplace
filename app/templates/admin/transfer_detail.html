@@ -1,0 +1,175 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Transfer Detail - Admin{% endblock %}
+{% block admin_page_title %}Transfer Detail{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Status Banner -->
+    <div class="rounded-xl p-4 sm:p-5 mb-6 {% if transfer.status == 'completed' %}bg-green-50 border border-green-200{% elif transfer.status == 'pending_verification' %}bg-amber-50 border border-amber-200{% elif transfer.status == 'pending_payment' %}bg-blue-50 border border-blue-200{% elif transfer.status == 'rejected' %}bg-red-50 border border-red-200{% else %}bg-gray-50 border border-gray-200{% endif %}">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+                    {% if transfer.status == 'completed' %}bg-green-100{% elif transfer.status == 'pending_verification' %}bg-amber-100{% elif transfer.status == 'pending_payment' %}bg-blue-100{% elif transfer.status == 'rejected' %}bg-red-100{% else %}bg-gray-100{% endif %}">
+                    <i class="fas {% if transfer.status == 'completed' %}fa-check text-green-600{% elif transfer.status == 'pending_verification' %}fa-clock text-amber-600{% elif transfer.status == 'pending_payment' %}fa-hourglass-half text-blue-600{% elif transfer.status == 'rejected' %}fa-times text-red-600{% else %}fa-info text-gray-600{% endif %}"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-sm 
+                        {% if transfer.status == 'completed' %}text-green-800{% elif transfer.status == 'pending_verification' %}text-amber-800{% elif transfer.status == 'pending_payment' %}text-blue-800{% elif transfer.status == 'rejected' %}text-red-800{% else %}text-gray-800{% endif %}">
+                        {{ transfer.status.replace('_', ' ').title() }}
+                    </p>
+                    <p class="text-xs text-gray-500">{{ transfer.created_at.strftime('%B %d, %Y at %H:%M') }}</p>
+                </div>
+            </div>
+            <a href="{{ url_for('admin.transfers') }}" class="text-sm text-gray-500 hover:text-gray-700 sm:text-right">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Transfers
+            </a>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <!-- Product Info -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
+            <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <i class="fas fa-box text-indigo-500"></i> Product
+            </h3>
+            <div class="flex gap-3">
+                <div class="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                    {% if transfer.product and transfer.product.image_urls %}
+                        <img src="{{ transfer.product.image_urls[0] }}" alt="{{ transfer.product.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-gray-300"><i class="fas fa-image text-xl"></i></div>
+                    {% endif %}
+                </div>
+                <div class="min-w-0">
+                    <h4 class="font-semibold text-gray-900 text-sm truncate">{{ transfer.product.name }}</h4>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ transfer.product.unique_code }}</p>
+                    <p class="text-xs text-gray-400">{{ transfer.product.product_type|default('physical')|title }} | {{ transfer.product.category|default('N/A') }}</p>
+                    <a href="{{ url_for('products.product_detail', product_code=transfer.product.unique_code) }}" target="_blank" class="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-medium mt-1.5">
+                        View Product <i class="fas fa-external-link-alt ml-1 text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Parties -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
+            <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <i class="fas fa-users text-indigo-500"></i> Parties
+            </h3>
+            <div class="space-y-3">
+                <div class="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                    {% if transfer.from_user.profile_image %}
+                        <img src="{{ transfer.from_user.profile_image }}" alt="" class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                    {% else %}
+                        <div class="w-9 h-9 gradient-bg rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                            {{ transfer.from_user.username[0].upper() }}
+                        </div>
+                    {% endif %}
+                    <div class="min-w-0">
+                        <p class="font-medium text-gray-900 text-sm truncate">{{ transfer.from_user.username }}</p>
+                        <p class="text-xs text-gray-400">Seller</p>
+                    </div>
+                </div>
+                <div class="flex justify-center">
+                    <div class="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center">
+                        <i class="fas fa-arrow-down text-indigo-400 text-xs"></i>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                    {% if transfer.to_user.profile_image %}
+                        <img src="{{ transfer.to_user.profile_image }}" alt="" class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                    {% else %}
+                        <div class="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                            {{ transfer.to_user.username[0].upper() }}
+                        </div>
+                    {% endif %}
+                    <div class="min-w-0">
+                        <p class="font-medium text-gray-900 text-sm truncate">{{ transfer.to_user.username }}</p>
+                        <p class="text-xs text-gray-400">Buyer</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Financial Details -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
+            <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <i class="fas fa-dollar-sign text-emerald-500"></i> Financial Details
+            </h3>
+            <div class="space-y-2">
+                <div class="flex justify-between py-2 border-b border-gray-50">
+                    <span class="text-gray-500 text-sm">Sale Price</span>
+                    <span class="font-bold text-gray-900">${{ "%.2f"|format(transfer.sale_price|float) }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-50">
+                    <span class="text-gray-500 text-sm">Royalty ({{ transfer.royalty_percentage }}%)</span>
+                    <span class="font-medium text-amber-600">${{ "%.2f"|format(transfer.royalty_amount|float) }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-50">
+                    <span class="text-gray-500 text-sm">Platform Fee ({{ transfer.platform_fee_percentage or 3 }}%)</span>
+                    <span class="font-medium text-emerald-600">${{ "%.2f"|format(transfer.platform_fee|float) }}</span>
+                </div>
+                <div class="flex justify-between py-2 bg-green-50 -mx-4 sm:-mx-5 px-4 sm:px-5 rounded-b-xl">
+                    <span class="font-semibold text-green-800 text-sm">Seller Receives</span>
+                    <span class="font-bold text-green-600">${{ "%.2f"|format(transfer.seller_receives()) }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment Receipt -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
+            <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <i class="fas fa-receipt text-indigo-500"></i> Payment Receipt
+            </h3>
+            {% if transfer.payment_receipt_url %}
+                <div class="rounded-lg overflow-hidden border border-gray-200 mb-3">
+                    <img src="{{ transfer.payment_receipt_url }}" alt="Receipt" class="w-full">
+                </div>
+                <a href="{{ transfer.payment_receipt_url }}" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">
+                    <i class="fas fa-external-link-alt mr-1"></i> View Full Size
+                </a>
+            {% else %}
+                <div class="bg-gray-50 rounded-lg p-6 text-center">
+                    <i class="fas fa-image text-gray-300 text-2xl mb-1.5"></i>
+                    <p class="text-gray-400 text-sm">No receipt uploaded yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Admin Actions -->
+    {% if transfer.status in ['pending_payment', 'pending_verification'] %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 mt-6">
+            <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <i class="fas fa-gavel text-indigo-500"></i> Admin Actions
+            </h3>
+            <form method="POST" action="{{ url_for('admin.resolve_transfer', transfer_id=transfer.id) }}" class="space-y-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Notes (optional)</label>
+                    <textarea name="reason" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm transition resize-none" placeholder="Add notes about this transfer..."></textarea>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <button type="submit" name="action" value="approve" class="flex-1 gradient-bg text-white py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition">
+                        <i class="fas fa-check mr-1.5"></i> Approve
+                    </button>
+                    <button type="submit" name="action" value="reject" class="flex-1 bg-red-50 text-red-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-red-100 transition">
+                        <i class="fas fa-times mr-1.5"></i> Reject
+                    </button>
+                    <button type="submit" name="action" value="cancel" class="bg-gray-50 text-gray-600 py-2.5 px-5 rounded-xl text-sm font-semibold hover:bg-gray-100 transition">
+                        <i class="fas fa-ban mr-1.5"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+    
+    {% if transfer.verification_notes %}
+        <div class="bg-gray-50 rounded-xl p-4 sm:p-5 mt-4">
+            <h4 class="text-sm font-semibold text-gray-900 mb-1">Notes</h4>
+            <p class="text-gray-600 text-sm">{{ transfer.verification_notes }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
